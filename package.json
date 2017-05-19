@@ -1,0 +1,19 @@
+{
+  "name": "ihme-interview",
+  "version": "1.0.0",
+  "description": "IHME Interview - D3/GBD challenge",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/awaidmann/IHME-Interview.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/awaidmann/IHME-Interview/issues"
+  },
+  "homepage": "https://github.com/awaidmann/IHME-Interview#readme"
+}
