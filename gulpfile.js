@@ -9,6 +9,8 @@ const DATA = `${ROOT}data/`
 const DATA_CB = `${DATA}IHME_GBD_2013_OBESITY_PREVALENCE_1990_2013_CB_Y2014M10D08.CSV`
 const DATA_SET = `${DATA}IHME_GBD_2013_OBESITY_PREVALENCE_1990_2013_Y2014M10D08.CSV`
 
+let LEGEND = { order: [], cols: [], keys: {} }
+
 function csvSafeSplit(line) {
   const split = []
   if (line && line.length) {
@@ -37,63 +39,45 @@ function csvSafeSplit(line) {
 
 gulp.task('codebook', (cb) => {
   const rl = readline.createInterface({ input: fs.createReadStream(DATA_CB) })
-  let legend = { order: [], keys: [] }
+  let legend = { order: [], cols: [], keys: {} }
   let partitions
 
   rl.on('line', (line) => {
     if (line) {
       const values = csvSafeSplit(line)
-      if (!legend.keys.length) {
-        const labels = { keys: values }
-        labels[values[0]] = {}
-        Object.assign(legend, labels)
+      if (!legend.cols.length) {
+        legend.cols = values
 
       } else {
         const colsWithValues = values.filter((col) => col.length)
         if (colsWithValues.length) {
           if (!partitions) {
             legend.order.push(values[0])
-            legend[legend.keys[0]][values[0]] = legend.keys.slice(1).reduce((desc, legendKey, index) => {
+            legend.keys[values[0]] = legend.cols.reduce((desc, legendKey, index) => {
               if (legendKey && legendKey.length) {
-                desc[legendKey] = values[index + 1]
+                desc[legendKey] = values[index]
               }
               return desc
             }, {})
           } else {
             if (!partitions.keys) {
-              partitions.keys = values
-              partitions.partitionIndex = values.reduce(
-                (desc, partKey, index, iter) => {
+              partitions.keys = values.reduce(
+                (allKeys, partKey) => {
                   if (partKey && partKey.length) {
-                    if (!desc.sticky) {
-                      desc.partIndex += 1
-                      desc.sticky = true
-                      desc.indices[desc.partIndex] = { start: index }
-                    } else if (iter.length - 1 == index) {
-                      desc.indices[desc.partIndex].end = index
-                    }
-                  } else if (desc.sticky) {
-                    desc.indices[desc.partIndex].end = index - 1
-                    desc.sticky = false
+                    allKeys[partKey] = []
                   }
-                  return desc
-                }, { sticky: false, partIndex: -1, indices: [] }).indices
-              partitions.partitions = Array(partitions.partitionIndex.length)
+                  return allKeys
+                }, {})
+              partitions.order = values
             } else {
-              partitions.partitionIndex.reduce(
-                (part, indices, partIndex) => {
-                  const keys = partitions.keys.slice(indices.start, indices.end + 1)
-                  const subValues = values.slice(indices.start, indices.end + 1)
-                  const mapped = keys.reduce((sub, partKey, index) => {
-                    const val = subValues[index]
-                    if (val && val.length) sub[partKey] = subValues[index]
-                    return sub
-                  }, {})
-                  if (!part[partIndex]) part[partIndex] = []
-                  if (Object.keys(mapped).length) part[partIndex].push(mapped)
-                  return part
-                },
-                partitions.partitions)
+              values.reduce(
+                (partitionMap, value, index) => {
+                  const partitionKey = partitions.order[index]
+                  if (partitionKey && partitionKey.length && value && value.length) {
+                    partitionMap[partitionKey].push(value)
+                  }
+                  return partitionMap
+                }, partitions.keys)
             }
           }
         } else {
@@ -104,8 +88,18 @@ gulp.task('codebook', (cb) => {
   })
 
   rl.on('close', () => {
-    console.log(JSON.stringify(legend, null, 2))
-    console.log(JSON.stringify(partitions, null, 2))
+    const filteredCols = legend.cols.filter(col => col && col.length)
+    const codingKey = filteredCols[filteredCols.length - 1]
+    Object.keys(partitions.keys).reduce(
+      (lgnd, partKey) => {
+        if (lgnd.keys && lgnd.keys[partKey]) {
+          lgnd.keys[partKey][codingKey] = partitions.keys[partKey]
+        }
+        return lgnd
+      }, legend)
+
+    LEGEND = legend
+    LEGEND.cols = filteredCols
     console.log('closed')
     cb()
   })
