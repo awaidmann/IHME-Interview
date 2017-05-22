@@ -6,6 +6,13 @@ const seq = require('gulp-sequence')
 const fs = require('fs')
 const readline = require('readline')
 
+const rollup = require('rollup')
+const rollup_babel = require('rollup-plugin-babel')
+const rollup_node = require('rollup-plugin-node-resolve')
+const rollup_commonjs = require('rollup-plugin-commonjs')
+const rollup_replace = require('rollup-plugin-replace')
+const rollup_uglify = require('rollup-plugin-uglify')
+
 const config = require('./data.config')
 
 const ROOT = './'
@@ -204,9 +211,33 @@ gulp.task('minimize', ['partition'], (cb) => {
   })
 })
 
-gulp.task('rm:tmp', () => del([TMP]))
+gulp.task('bundle', (cb) => {
+  rollup.rollup({
+    entry: 'index.js',
+    plugins: [
+      rollup_replace({
+        'process.env.NODE_ENV': JSON.stringify('production')
+      }),
+      rollup_node(),
+      rollup_commonjs(),
+      rollup_babel(),
+      rollup_uglify(),
+    ]
+    // external: ['d3']
+  }).then(bundle => {
+    return bundle.write({
+      format: 'umd',
+      sourceMap: true,
+      dest: `${DIST}app.js`
+    })
+  })
+  .then(() => cb())
+  .catch(err => cb(err))
+})
 
+gulp.task('rm:tmp', () => del([TMP]))
 gulp.task('rm:build', () => del([DIST]))
 
 gulp.task('default', ['build'])
-gulp.task('build', seq('rm:build', 'codebook', 'minimize', 'rm:tmp'))
+gulp.task('dist', seq('rm:build', 'codebook', 'minimize', 'rm:tmp'))
+gulp.task('build', ['bundle'])
