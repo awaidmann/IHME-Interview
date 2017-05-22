@@ -1,13 +1,16 @@
 'use strict'
 
 const gulp = require('gulp')
+const del = require('del')
+const seq = require('gulp-sequence')
 const fs = require('fs')
 const readline = require('readline')
 
+const config = require('./data.config')
+
 const ROOT = './'
-const DATA = `${ROOT}data/`
-const DATA_CB = `${DATA}IHME_GBD_2013_OBESITY_PREVALENCE_1990_2013_CB_Y2014M10D08.CSV`
-const DATA_SET = `${DATA}IHME_GBD_2013_OBESITY_PREVALENCE_1990_2013_Y2014M10D08.CSV`
+const DIST = `${ROOT}dist/`
+const TMP = `${ROOT}tmp/`
 
 let LEGEND = { order: [], cols: [], keys: {} }
 
@@ -38,7 +41,7 @@ function csvSafeSplit(line) {
 }
 
 gulp.task('codebook', (cb) => {
-  const rl = readline.createInterface({ input: fs.createReadStream(DATA_CB) })
+  const rl = readline.createInterface({ input: fs.createReadStream(config.legend) })
   let legend = { order: [], cols: [], keys: {} }
   let partitions
 
@@ -100,10 +103,110 @@ gulp.task('codebook', (cb) => {
 
     LEGEND = legend
     LEGEND.cols = filteredCols
-    console.log('closed')
     cb()
   })
 })
 
+gulp.task('partition', (cb) => {
+  fs.mkdir(TMP, (err) => {
+    if (err) return cb(err)
+
+    const rl = readline.createInterface({ input: fs.createReadStream(config.data) })
+    let revOrder
+
+    rl.on('line', (line) => {
+      if (line) {
+        const values = csvSafeSplit(line)
+        if (!revOrder) {
+          LEGEND.order = values
+          revOrder = values.reduce((rev, key, i) => {
+            rev[key] = i
+            return rev
+          }, {})
+        } else {
+          const orderIndex = revOrder[config.sort_order[0]]
+          if (orderIndex > -1 && orderIndex < values.length) {
+            const fileName = values[orderIndex]
+            if (fileName && fileName.length) {
+              fs.appendFile(`${TMP}${fileName}`, `${line}\n`, () => {})
+            }
+          }
+        }
+      }
+    })
+    rl.on('close', () => cb())
+  })
+})
+
+gulp.task('minimize', ['partition'], (cb) => {
+  fs.readdir(TMP, (err, fileNames) => {
+    if (err) return cb(err)
+    if (fileNames) {
+      fs.mkdir(DIST, (err) => {
+        if (err) return cb(err)
+        const localSortOrder = config.sort_order.slice(1)
+        const codingKey = LEGEND.cols[LEGEND.cols.length - 1]
+        const codingMap = localSortOrder.reduce((map, sortKey) => {
+          const valueMap = (LEGEND.keys[sortKey] || {})[codingKey]
+          if (valueMap) {
+            map[sortKey] = (Array.isArray(valueMap) ? valueMap : [valueMap])
+              .reduce((acc, v, i) => {
+                acc[v] = i
+                return acc
+              }, {})
+          }
+          return map
+        }, {})
+        const codingLengths = localSortOrder.slice(0,-1)
+          .map(sortKey => ((LEGEND.keys[sortKey] || {})[codingKey] || []).length)
+        const partitionIndices = localSortOrder.map((sortKey) => {
+          if (Array.isArray(sortKey)) {
+            return sortKey.map(valKey => LEGEND.order.indexOf(valKey))
+          } else {
+            return LEGEND.order.indexOf(sortKey)
+          }
+        })
+
+        Promise.all(
+          fileNames.map(file => {
+            return new Promise(
+              (resolve, reject) => {
+                const rl = readline.createInterface({ input: fs.createReadStream(`${TMP}${file}`) })
+                const data = Array(codingLengths.reduce((length, dimLength) => length * dimLength, 1))
+
+                rl.on('line', line => {
+                  if (line) {
+                    const values = csvSafeSplit(line)
+                    const valueIndex = partitionIndices[partitionIndices.length - 1]
+                    const selectedData = Array.isArray(valueIndex) ? valueIndex.map(index => values[index]) : values[valueIndex]
+
+                    const targetIndex = partitionIndices.slice(0, -1)
+                      .map(index => codingMap[LEGEND.order[index]][values[index]])
+                      .reduce((target, valIndex, j) => {
+                          return target + (valIndex * codingLengths.slice(j+1).reduce((mSum, l) => mSum*l, 1))
+                        }, 0)
+
+                    data[targetIndex] = selectedData
+                  }
+                })
+
+                rl.on('close', () => {
+                  fs.writeFile(`${DIST}${file}.json`,
+                    JSON.stringify({ order: localSortOrder, map: codingMap, data }),
+                    (err) => err ? reject(err) : resolve())
+                })
+              })
+          })
+        ).then(() => cb())
+        .catch(err => cb(err))
+      })
+    }
+  })
+})
+
+gulp.task('rm:tmp', () => del([TMP]))
+
+gulp.task('rm:build', () => del([DIST]))
+
 gulp.task('default', ['build'])
-gulp.task('build', ['codebook'])
+gulp.task('build', seq('rm:build', 'codebook', 'minimize', 'rm:tmp'))
