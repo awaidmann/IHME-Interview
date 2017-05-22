@@ -1,7 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 
+import { Graph } from './src/Graph'
+
 ReactDOM.render(
-  <h1>Hello, world!</h1>,
+  <Graph region="G" />,
   document.getElementById('react')
 )
