@@ -1,7 +1,7 @@
 import React from 'react'
 import { List, Map } from 'immutable'
 
-import { DataSetLoader, DataSet } from './DataSetLoader'
+import { DataSet } from './DataSet'
 
 export class Graph extends React.Component {
   constructor(props) {
@@ -12,7 +12,7 @@ export class Graph extends React.Component {
   }
 
   componentDidMount() {
-    DataSetLoader.loadByRegion(this.props.region)
+    DataSet.loadByRegion(this.props.region)
       .then(dataSet => {
         const filters = dataSet.filters.map((filterList) => filterList.first())
         const years = dataSet.filters.get('year', Map()).count()

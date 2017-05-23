@@ -33,12 +33,10 @@ export class DataSet {
       const filterIndex = this.orderIndexMap.get(key)
       return target + (this.indexMap.getIn([key, filter]) * this.multipliers.get(filterIndex))
     }, 0)
+
     return this.dataSet.get(index)
   }
 
-}
-
-export class DataSetLoader {
   static loadByRegion(region) {
     return new Promise((resolve, reject) => {
       const req = new XMLHttpRequest()
