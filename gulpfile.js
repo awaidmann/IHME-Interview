@@ -219,7 +219,11 @@ gulp.task('bundle', (cb) => {
         'process.env.NODE_ENV': JSON.stringify('production')
       }),
       rollup_node(),
-      rollup_commonjs(),
+      rollup_commonjs({
+        namedExports: {
+          'node_modules/immutable/dist/immutable.js': ['List', 'Map', 'Record', 'fromJS']
+        }
+      }),
       rollup_babel(),
       rollup_uglify(),
     ]
