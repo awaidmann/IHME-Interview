@@ -5,6 +5,7 @@ import { timeYear } from 'd3-time'
 
 import { DataSet } from './DataSet'
 import { Axis } from './Axis'
+import { RadialBounds } from './RadialBounds'
 
 export class Graph extends React.Component {
   render() {
@@ -23,6 +24,7 @@ export class Graph extends React.Component {
       orientation: 'left',
       offsetEnd: true,
     }
+    let bounds = <div />
     if (this.props.dataset) {
       const xOffset = 64
       const yOffset = 24
@@ -48,10 +50,13 @@ export class Graph extends React.Component {
         .range([0, step * years.size])
       xAxisProps.originX = originX
       xAxisProps.originY = originY
+
+      bounds = <RadialBounds x={step + originX} y={originY - step} maxR={step/2} ratios={List([0.1, 0.25, 0.3, 0.7, 2])} baseRatio={0.5}/>
     }
 
     return (
       <svg width={graphWidth} height={graphHeight} padding={this.props.padding}>
+        { bounds }
         <Axis {...yAxisProps} />
         <Axis {...xAxisProps} />
       </svg>
