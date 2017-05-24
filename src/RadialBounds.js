@@ -22,8 +22,8 @@ export class RadialBounds extends React.Component {
       .reduce((el, ratioPairs, i) => {
         if (ratioPairs.first() && ratioPairs.last()) {
           const ring = arc()
-            .innerRadius(Math.min(ratioPairs.first(), 1) * this.props.maxR)
-            .outerRadius(Math.min(ratioPairs.last(), 1) * this.props.maxR)
+            .innerRadius(Math.sqrt(Math.min(ratioPairs.first(), 1) * this.props.maxR*this.props.maxR))
+            .outerRadius(Math.sqrt(Math.min(ratioPairs.last(), 1) * this.props.maxR*this.props.maxR))
             .startAngle(0)
             .endAngle(2*Math.PI)
           el.append('path')
