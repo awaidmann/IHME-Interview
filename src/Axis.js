@@ -31,7 +31,7 @@ export class Axis extends React.Component {
       const offsetStart = this.props.offsetStart
       const offsetEnd = this.props.offsetEnd
       select(this.refs.axis)
-        .attr('transform', this.props.transform)
+        .attr('transform', `translate(${this.props.originX || 0}, ${this.props.originY || 0})`)
         .call(axis.ticks(this.props.ticks))
       .selectAll('g')
       .select(function(d, i, nodes) {

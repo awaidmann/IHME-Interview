@@ -34,16 +34,20 @@ export class Graph extends React.Component {
       const stepWidth = (graphWidth - xOffset - this.props.padding*2) / years.size
       const step = Math.min(stepHeight, stepWidth)
 
+      const originX = xOffset + gutterOffset
+      const originY = (step * ages.size) + this.props.padding
       yAxisProps.scale = yAxisProps.scale
         .domain(ages.toArray())
         .range([0, step * ages.size])
       yAxisProps.ticks = ages.size
-      yAxisProps.transform = `translate(${xOffset + gutterOffset}, ${this.props.padding})`
+      yAxisProps.originX = originX
+      yAxisProps.originY = this.props.padding
 
       xAxisProps.scale = xAxisProps.scale
         .domain([new Date(Number(years.first()), 0), new Date(Number(years.last()), 0)])
         .range([0, step * years.size])
-      xAxisProps.transform = `translate(${xOffset + gutterOffset}, ${(step * ages.size) + this.props.padding})`
+      xAxisProps.originX = originX
+      xAxisProps.originY = originY
     }
 
     return (
