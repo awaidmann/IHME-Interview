@@ -16,16 +16,19 @@ export class Graph extends React.Component {
       scale: scaleTime(),
       ticks: timeYear,
       orientation: 'bottom',
+      offsetStart: true,
     }
     const yAxisProps = {
       scale: scalePoint(),
       orientation: 'left',
+      offsetEnd: true,
     }
     if (this.props.dataset) {
       const xOffset = 64
       const yOffset = 24
-      const ages = this.props.dataset.filters.get('age_group_id', List())
-      const years = this.props.dataset.filters.get('year', List())
+      const ages = this.props.dataset.filters.get('age_group_id', List()).push('')
+      let years = this.props.dataset.filters.get('year', List())
+      years = years.unshift(Number(years.first()) - 1)
 
       const stepHeight = (graphHeight - yOffset - this.props.padding*2) / ages.size
       const stepWidth = (graphWidth - xOffset - this.props.padding*2) / years.size

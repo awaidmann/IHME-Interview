@@ -28,9 +28,21 @@ export class Axis extends React.Component {
         break
     }
     if (axis) {
+      const offsetStart = this.props.offsetStart
+      const offsetEnd = this.props.offsetEnd
       select(this.refs.axis)
         .attr('transform', this.props.transform)
         .call(axis.ticks(this.props.ticks))
+      .selectAll('g')
+      .select(function(d, i, nodes) {
+        if (offsetStart) {
+          return i == 0 ? this : null
+        } else if (offsetEnd) {
+          return i == nodes.length ? this : null
+        }
+      })
+      .select('text')
+        .text('')
     }
   }
 
