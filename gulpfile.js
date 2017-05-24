@@ -227,7 +227,6 @@ gulp.task('bundle', (cb) => {
       rollup_babel(),
       rollup_uglify(),
     ]
-    // external: ['d3']
   }).then(bundle => {
     return bundle.write({
       format: 'umd',

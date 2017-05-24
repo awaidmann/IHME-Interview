@@ -32,6 +32,10 @@
     "rollup-plugin-uglify": "^2.0.1"
   },
   "dependencies": {
+    "d3-axis": "^1.0.7",
+    "d3-scale": "^1.0.6",
+    "d3-selection": "^1.1.0",
+    "d3-time": "^1.0.6",
     "immutable": "^3.8.1",
     "react": "^15.5.4",
     "react-dom": "^15.5.4"

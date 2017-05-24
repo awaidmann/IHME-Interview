@@ -11,7 +11,7 @@ export class DataSet {
     this.dataSet = fromJS(rawDataJSON[RESP_KEYS.DATA] || [])
     this.indexMap = fromJS(rawDataJSON[RESP_KEYS.INDEX_MAP] || {})
     this.filters = this.indexMap.map((mapped) => {
-      return mapped ? mapped.keySeq().toList() : List()
+      return mapped ? mapped.sort().keySeq().toList() : List()
     })
 
     this.order = List(rawDataJSON[RESP_KEYS.ORDER] || [])
