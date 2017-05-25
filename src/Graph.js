@@ -24,7 +24,7 @@ export class Graph extends React.Component {
       orientation: 'left',
       offsetEnd: true,
     }
-    let bounds = <div />
+    let boundsComps = <div />
     if (this.props.dataset) {
       const xOffset = 64
       const yOffset = 24
@@ -51,12 +51,36 @@ export class Graph extends React.Component {
       xAxisProps.originX = originX
       xAxisProps.originY = originY
 
-      bounds = <RadialBounds x={step + originX} y={originY - step} maxR={step/2} ratios={List([0.1, 0.25, 0.3, 0.7, 2])} baseRatio={0.5}/>
+      const path = Map({ sex_id: '1', metric: 'obese' })
+      const xFilters = this.props.dataset.filters.get('year', List())
+      const yFilters = this.props.dataset.filters.get('age_group_id', List())
+      boundsComps = xFilters
+        .reduce((comps, xKey, i) => {
+          const x = xAxisProps.scale(new Date(Number(xKey), 0)) + originX
+          const pointPath = path.set('year', xKey)
+
+          return yFilters.reduce((_comps, yKey, j) => {
+            const dataPoint = this.props.dataset
+              .valueAt(pointPath.set('age_group_id', yKey))
+            if (dataPoint) {
+              return _comps.push(
+                <RadialBounds
+                  key={`${i}.${j}`}
+                  x={x}
+                  y={originY - step - yAxisProps.scale(yKey)}
+                  maxR={step/2}
+                  ratios={dataPoint.rest()}
+                  baseRatio={dataPoint.first()} />)
+            }
+            return _comps
+          }, comps)
+        }, List())
+        .toArray()
     }
 
     return (
       <svg width={graphWidth} height={graphHeight} padding={this.props.padding}>
-        { bounds }
+        { boundsComps }
         <Axis {...yAxisProps} />
         <Axis {...xAxisProps} />
       </svg>
