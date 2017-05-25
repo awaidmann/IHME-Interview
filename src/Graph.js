@@ -68,9 +68,12 @@ export class Graph extends React.Component {
                   key={`${i}.${j}`}
                   x={x}
                   y={originY - step - yAxisProps.scale(yKey)}
-                  maxR={step/2}
-                  ratios={dataPoint.rest()}
-                  baseRatio={dataPoint.first()} />)
+                  maxRadius={step/2}
+                  lowerRatio={dataPoint.get(1, 0)}
+                  upperRatio={dataPoint.get(2, 1)}
+                  baseRatio={dataPoint.first()}
+                  innerFill='#80DEEA'
+                  outerFill='#E91E63'/>)
             }
             return _comps
           }, comps)

@@ -13,30 +13,30 @@ export class RadialBounds extends React.Component {
   }
 
   drawRadialBounds() {
-    (this.props.ratios || List())
-      .push(this.props.baseRatio)
-      .sort()
-      .map((ratio, i, thisList) => {
-        return List([ratio, thisList.get(i + 1)])
-      })
-      .reduce((el, ratioPairs, i) => {
-        if (ratioPairs.first() && ratioPairs.last()) {
-          const ring = arc()
-            .innerRadius(Math.sqrt(Math.min(ratioPairs.first(), 1) * this.props.maxR*this.props.maxR))
-            .outerRadius(Math.sqrt(Math.min(ratioPairs.last(), 1) * this.props.maxR*this.props.maxR))
-            .startAngle(0)
-            .endAngle(2*Math.PI)
-          el.append('path')
-            .attr('d', ring)
-            .attr('fill', i%2 ? 'red' : 'blue')
-            .attr('stroke-width', 0)
-        }
-        return el
-      }, select(this.refs.bounds))
+    const upper = arc()
+      .innerRadius(radialProportion(this.props.baseRatio, this.props.maxRadius))
+      .outerRadius(radialProportion(this.props.upperRatio,this.props.maxRadius))
+      .startAngle(0)
+      .endAngle(2*Math.PI)
+
+    const bounds = select(this.refs.bounds)
       .attr('transform', `translate(${this.props.x}, ${this.props.y})`)
+
+    bounds.append('path')
+      .attr('d', upper)
+      .attr('fill', this.props.outerFill || 'black')
+      .attr('stroke-width', 0)
   }
 
   render() {
-    return (<g ref="bounds" key={this.props.key}></g>)
+    return (
+      <g ref="bounds" key={this.props.key}>
+        <circle r={radialProportion(this.props.lowerRatio, this.props.maxRadius)} fill={this.props.innerFill || 'black'} />
+      </g>
+    )
   }
+}
+
+function radialProportion(ratio, maxRadius) {
+  return Math.sqrt(Math.min(ratio, 1) * maxRadius * maxRadius)
 }
