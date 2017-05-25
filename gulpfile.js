@@ -216,6 +216,38 @@ gulp.task('minimize', ['partition'], (cb) => {
   })
 })
 
+gulp.task('legend', (cb) => {
+  const grouping = LEGEND.order.reduce((groups, legendKey) => {
+    if (legendKey && legendKey.length) {
+      const keyData = (LEGEND.keys[legendKey] || {})
+
+      const group = legendKey.split('_')[0]
+      const details = {}
+      details[legendKey] = {
+        label: keyData.label,
+        index: ((groups[group] || {}).order || []).length,
+      }
+      const values = keyData.values || []
+      if (groups[group]) {
+        groups[group].order.push(legendKey)
+        groups[group].values.map((val, i) => val.push(values[i]))
+        Object.assign(groups[group].details, details)
+      } else {
+        groups[group] = {
+          order: [legendKey],
+          details,
+          values: (Array.isArray(values) ? values : [values]).map(val => [val]),
+        }
+      }
+    }
+    return groups
+  }, {})
+
+  fs.writeFile(`${PARTITION}legend.json`,
+    JSON.stringify(grouping, null, 2),
+    err => cb(err))
+})
+
 gulp.task('app', (cb) => {
   rollup.rollup({
     entry: 'index.js',
@@ -245,9 +277,9 @@ gulp.task('app', (cb) => {
 
 gulp.task('rm:tmp', () => del([TMP]))
 gulp.task('rm:build', () => del([BUILD]))
-gulp.task('rm:partition', () => del([PARTITION]))
+gulp.task('rm:partition', () => del([TMP, PARTITION]))
 
 gulp.task('default', ['build'])
 gulp.task('build', ['build:data', 'build:app'])
-gulp.task('build:data', seq('rm:partition', 'codebook', 'minimize', 'rm:tmp'))
+gulp.task('build:data', seq('rm:partition', 'codebook', 'minimize', 'legend', 'rm:tmp'))
 gulp.task('build:app', seq('rm:build', 'app'))
