@@ -22,6 +22,7 @@ export class RadialBounds extends React.Component {
     const bounds = select(this.refs.bounds)
       .attr('transform', `translate(${this.props.x}, ${this.props.y})`)
 
+    bounds.select('path').remove()
     bounds.append('path')
       .attr('d', upper)
       .attr('fill', this.props.outerFill || 'black')
