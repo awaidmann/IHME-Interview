@@ -16,7 +16,8 @@ const rollup_uglify = require('rollup-plugin-uglify')
 const config = require('./data.config')
 
 const ROOT = './'
-const DIST = `${ROOT}dist/`
+const PARTITION = `${ROOT}partition/`
+const BUILD = `${ROOT}build/`
 const TMP = `${ROOT}tmp/`
 
 let LEGEND = { order: [], cols: [], keys: {} }
@@ -48,6 +49,12 @@ function csvSafeSplit(line) {
 }
 
 gulp.task('codebook', (cb) => {
+  const CB_HEADER_MAP = {
+    'Variable': 'id',
+    'Label': 'label',
+    'Value Coding': 'values',
+  }
+
   const rl = readline.createInterface({ input: fs.createReadStream(config.legend) })
   let legend = { order: [], cols: [], keys: {} }
   let partitions
@@ -65,7 +72,7 @@ gulp.task('codebook', (cb) => {
             legend.order.push(values[0])
             legend.keys[values[0]] = legend.cols.reduce((desc, legendKey, index) => {
               if (legendKey && legendKey.length) {
-                desc[legendKey] = values[index]
+                desc[CB_HEADER_MAP[legendKey]] = values[index]
               }
               return desc
             }, {})
@@ -99,11 +106,10 @@ gulp.task('codebook', (cb) => {
 
   rl.on('close', () => {
     const filteredCols = legend.cols.filter(col => col && col.length)
-    const codingKey = filteredCols[filteredCols.length - 1]
     Object.keys(partitions.keys).reduce(
       (lgnd, partKey) => {
         if (lgnd.keys && lgnd.keys[partKey]) {
-          lgnd.keys[partKey][codingKey] = partitions.keys[partKey]
+          lgnd.keys[partKey].values = partitions.keys[partKey]
         }
         return lgnd
       }, legend)
@@ -149,12 +155,11 @@ gulp.task('minimize', ['partition'], (cb) => {
   fs.readdir(TMP, (err, fileNames) => {
     if (err) return cb(err)
     if (fileNames) {
-      fs.mkdir(DIST, (err) => {
+      fs.mkdir(PARTITION, (err) => {
         if (err) return cb(err)
         const localSortOrder = config.sort_order.slice(1)
-        const codingKey = LEGEND.cols[LEGEND.cols.length - 1]
         const codingMap = localSortOrder.reduce((map, sortKey) => {
-          const valueMap = (LEGEND.keys[sortKey] || {})[codingKey]
+          const valueMap = (LEGEND.keys[sortKey] || {}).values
           if (valueMap) {
             map[sortKey] = (Array.isArray(valueMap) ? valueMap : [valueMap])
               .reduce((acc, v, i) => {
@@ -165,7 +170,7 @@ gulp.task('minimize', ['partition'], (cb) => {
           return map
         }, {})
         const codingLengths = localSortOrder.slice(0,-1)
-          .map(sortKey => ((LEGEND.keys[sortKey] || {})[codingKey] || []).length)
+          .map(sortKey => ((LEGEND.keys[sortKey] || {}).values || []).length)
         const partitionIndices = localSortOrder.map((sortKey) => {
           if (Array.isArray(sortKey)) {
             return sortKey.map(valKey => LEGEND.order.indexOf(valKey))
@@ -198,7 +203,7 @@ gulp.task('minimize', ['partition'], (cb) => {
                 })
 
                 rl.on('close', () => {
-                  fs.writeFile(`${DIST}${file}.json`,
+                  fs.writeFile(`${PARTITION}${file}.json`,
                     JSON.stringify({ order: localSortOrder, map: codingMap, data }),
                     (err) => err ? reject(err) : resolve())
                 })
@@ -211,7 +216,7 @@ gulp.task('minimize', ['partition'], (cb) => {
   })
 })
 
-gulp.task('bundle', (cb) => {
+gulp.task('app', (cb) => {
   rollup.rollup({
     entry: 'index.js',
     plugins: [
@@ -231,7 +236,7 @@ gulp.task('bundle', (cb) => {
     return bundle.write({
       format: 'umd',
       sourceMap: true,
-      dest: `${DIST}app.js`
+      dest: `${BUILD}app.js`
     })
   })
   .then(() => cb())
@@ -239,8 +244,10 @@ gulp.task('bundle', (cb) => {
 })
 
 gulp.task('rm:tmp', () => del([TMP]))
-gulp.task('rm:build', () => del([DIST]))
+gulp.task('rm:build', () => del([BUILD]))
+gulp.task('rm:partition', () => del([PARTITION]))
 
 gulp.task('default', ['build'])
-gulp.task('dist', seq('rm:build', 'codebook', 'minimize', 'rm:tmp'))
-gulp.task('build', ['bundle'])
+gulp.task('build', ['build:data', 'build:app'])
+gulp.task('build:data', seq('rm:partition', 'codebook', 'minimize', 'rm:tmp'))
+gulp.task('build:app', seq('rm:build', 'app'))

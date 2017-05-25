@@ -54,7 +54,7 @@ export class DataSet {
         reject(req.statusText)
       }
 
-      req.open('GET', `./dist/${region}.json`, true)
+      req.open('GET', `./partition/${region}.json`, true)
       req.send(null)
     })
   }
