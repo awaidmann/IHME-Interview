@@ -25,43 +25,56 @@ export class Graph extends React.Component {
       offsetEnd: true,
     }
     let boundsComps = <div />
-    if (this.props.dataset) {
+    if (this.props.dataset && this.props.legend) {
       const xOffset = 64
       const yOffset = 24
-      const ages = this.props.dataset.filters.get('age_group_id', List()).push('')
-      let years = this.props.dataset.filters.get('year', List())
-      years = years.unshift(Number(years.first()) - 1)
 
-      const stepHeight = (graphHeight - yOffset - this.props.padding*2) / ages.size
-      const stepWidth = (graphWidth - xOffset - this.props.padding*2) / years.size
+      const xFilters = this.props.legend.filter('year').map((x) => x.get(0))
+      const adjXCount = xFilters.size + 1
+
+      const yOrder = this.props.legend.order('age')
+      let yFilters = this.props.legend.filter('age', Map({ 'age_group': (a) => a ? a.endsWith('yrs') : false }))
+      const yFiltersRevMap = this.props.legend.filter('age')
+        .reduce((rev, linked) => {
+          return rev.set(
+            linked.get(yOrder.get('age_group')),
+            linked.get(yOrder.get('age_group_id')))
+        }, Map())
+      yFilters = yFilters.map((y) => y.get(yOrder.get('age_group')))
+      const adjYCount = yFilters.size + 1
+
+      const stepHeight = (graphHeight - yOffset - this.props.padding*2) / adjYCount
+      const stepWidth = (graphWidth - xOffset - this.props.padding*2) / adjXCount
       const step = Math.min(stepHeight, stepWidth)
 
       const originX = xOffset + gutterOffset
-      const originY = (step * ages.size) + this.props.padding
+      const originY = (step * adjYCount) + this.props.padding
+
       yAxisProps.scale = yAxisProps.scale
-        .domain(ages.toArray())
-        .range([0, step * ages.size])
-      yAxisProps.ticks = ages.size
+        .domain(yFilters
+          .push('')
+          .toArray())
+        .range([0, step * adjYCount])
+      yAxisProps.ticks = adjYCount
       yAxisProps.originX = originX
       yAxisProps.originY = this.props.padding
 
       xAxisProps.scale = xAxisProps.scale
-        .domain([new Date(Number(years.first()), 0), new Date(Number(years.last()), 0)])
-        .range([0, step * years.size])
+        .domain([new Date(Number(xFilters.first()) - 1, 0), new Date(Number(xFilters.last()), 0)])
+        .range([0, step * adjXCount])
       xAxisProps.originX = originX
       xAxisProps.originY = originY
 
       const path = Map({ sex_id: '1', metric: 'obese' })
-      const xFilters = this.props.dataset.filters.get('year', List())
-      const yFilters = this.props.dataset.filters.get('age_group_id', List())
       boundsComps = xFilters
         .reduce((comps, xKey, i) => {
           const x = xAxisProps.scale(new Date(Number(xKey), 0)) + originX
           const pointPath = path.set('year', xKey)
 
           return yFilters.reduce((_comps, yKey, j) => {
+            const yKeyId = yFiltersRevMap.get(yKey)
             const dataPoint = this.props.dataset
-              .valueAt(pointPath.set('age_group_id', yKey))
+              .valueAt(pointPath.set('age_group_id', yKeyId))
             if (dataPoint) {
               return _comps.push(
                 <RadialBounds
