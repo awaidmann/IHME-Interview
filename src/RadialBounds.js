@@ -1,37 +1,61 @@
 import React from 'react'
 import { List } from 'immutable'
 import { select } from 'd3-selection'
-import { arc } from 'd3-shape'
+import { transition } from 'd3-transition'
+import { easeCubicInOut } from 'd3-ease'
 
 export class RadialBounds extends React.Component {
   componentDidMount() {
-    this.drawRadialBounds()
-  }
-
-  componentDidUpdate() {
-    this.drawRadialBounds()
-  }
-
-  drawRadialBounds() {
-    const upper = arc()
-      .innerRadius(radialProportion(this.props.baseRatio, this.props.maxRadius))
-      .outerRadius(radialProportion(this.props.upperRatio,this.props.maxRadius))
-      .startAngle(0)
-      .endAngle(2*Math.PI)
-
     const bounds = select(this.refs.bounds)
       .attr('transform', `translate(${this.props.x}, ${this.props.y})`)
 
-    bounds.select('path').remove()
-    bounds.insert('path', 'rect')
-      .attr('d', upper)
+    bounds.insert('circle', '.hitbox')
+      .attr('class', 'inner-radial')
+      .attr('r', radialProportion(this.props.lowerRatio, this.props.maxRadius))
+      .attr('fill', this.props.innerFill || 'black')
+
+    bounds.insert('circle', '.inner-radial')
+      .attr('class', 'bounds-radial')
+      .attr('r', radialProportion(this.props.baseRatio, this.props.maxRadius))
+      .attr('fill', this.props.centerFill || 'white')
+
+    bounds.insert('circle', '.bounds-radial')
+      .attr('class', 'outer-radial')
+      .attr('r', radialProportion(this.props.upperRatio, this.props.maxRadius))
       .attr('fill', this.props.outerFill || 'black')
-      .attr('stroke-width', 0)
+  }
+
+  componentDidUpdate() {
+    const bounds = select(this.refs.bounds)
+    const duration = 1000
+    const ease = easeCubicInOut
+    bounds.selectAll('*').interrupt()
+    bounds.select('.inner-radial')
+      .transition()
+      .duration(duration)
+      .ease(ease)
+      .attr('r', radialProportion(this.props.lowerRatio, this.props.maxRadius))
+      .attr('fill', this.props.innerFill || 'black')
+
+    bounds.select('.bounds-radial')
+      .transition()
+      .duration(duration)
+      .ease(ease)
+      .attr('r', radialProportion(this.props.baseRatio, this.props.maxRadius))
+      .attr('fill', this.props.centerFill || 'white')
+
+    bounds.select('.outer-radial')
+      .transition()
+      .duration(duration)
+      .ease(ease)
+      .attr('r', radialProportion(this.props.upperRatio, this.props.maxRadius))
+      .attr('fill', this.props.outerFill || 'black')
   }
 
   onMouseOver() {
     select(this.refs.bounds)
-      .insert('circle', 'circle')
+      .insert('circle', '.outer-radial')
+      .attr('class', 'highlight')
       .attr('stroke', this.props.highlight)
       .attr('stroke-width', 1)
       .attr('opacity', 0.54)
@@ -42,15 +66,15 @@ export class RadialBounds extends React.Component {
 
   onMouseOut() {
     select(this.refs.bounds)
-      .select('circle')
+      .select('.highlight')
       .remove()
   }
 
   render() {
     return (
       <g ref="bounds" key={this.props.key}>
-        <circle r={radialProportion(this.props.lowerRatio, this.props.maxRadius)} fill={this.props.innerFill || 'black'} />
         <rect
+          className="hitbox"
           x={-this.props.maxRadius}
           y={-this.props.maxRadius}
           opacity="0"
