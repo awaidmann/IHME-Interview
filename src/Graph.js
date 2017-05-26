@@ -25,7 +25,7 @@ export class Graph extends React.Component {
       offsetEnd: true,
     }
     let boundsComps = <div />
-    if (this.props.dataset && this.props.legend) {
+    if (this.props.legend) {
       const xOffset = 64
       const yOffset = 24
 
@@ -65,34 +65,36 @@ export class Graph extends React.Component {
       xAxisProps.originX = originX
       xAxisProps.originY = originY
 
-      const path = Map({ sex_id: '1', metric: 'obese' })
-      boundsComps = xFilters
-        .reduce((comps, xKey, i) => {
-          const x = xAxisProps.scale(new Date(Number(xKey), 0)) + originX
-          const pointPath = path.set('year', xKey)
+      if (this.props.dataset) {
+        const path = Map({ sex_id: '1', metric: 'obese' })
+        boundsComps = xFilters
+          .reduce((comps, xKey, i) => {
+            const x = xAxisProps.scale(new Date(Number(xKey), 0)) + originX
+            const pointPath = path.set('year', xKey)
 
-          return yFilters.reduce((_comps, yKey, j) => {
-            const yKeyId = yFiltersRevMap.get(yKey)
-            const dataPoint = this.props.dataset
-              .valueAt(pointPath.set('age_group_id', yKeyId))
-            if (dataPoint) {
-              return _comps.push(
-                <RadialBounds
-                  key={`${i}.${j}`}
-                  x={x}
-                  y={originY - step - yAxisProps.scale(yKey)}
-                  maxRadius={step/2}
-                  lowerRatio={dataPoint.get(1, 0)}
-                  upperRatio={dataPoint.get(2, 1)}
-                  baseRatio={dataPoint.first()}
-                  highlight='#00BCD4'
-                  innerFill='#80DEEA'
-                  outerFill='#E91E63'/>)
-            }
-            return _comps
-          }, comps)
-        }, List())
-        .toArray()
+            return yFilters.reduce((_comps, yKey, j) => {
+              const yKeyId = yFiltersRevMap.get(yKey)
+              const dataPoint = this.props.dataset
+                .valueAt(pointPath.set('age_group_id', yKeyId))
+              if (dataPoint) {
+                return _comps.push(
+                  <RadialBounds
+                    key={`${i}.${j}`}
+                    x={x}
+                    y={originY - step - yAxisProps.scale(yKey)}
+                    maxRadius={step/2}
+                    lowerRatio={dataPoint.get(1, 0)}
+                    upperRatio={dataPoint.get(2, 1)}
+                    baseRatio={dataPoint.first()}
+                    highlight='#00BCD4'
+                    innerFill='#80DEEA'
+                    outerFill='#E91E63'/>)
+              }
+              return _comps
+            }, comps)
+          }, List())
+          .toArray()  
+      }
     }
 
     return (

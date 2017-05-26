@@ -21,7 +21,10 @@ export class Viz extends React.Component {
     Legend.load()
       .then(legend => {
         this.setState({ legend })
-        this.fetchDataset(this.state.location)
+        const initialLocation = legend.filter('location')
+          .getIn([0, legend.order('location').get('location')])
+
+        this.fetchDataset(initialLocation)
       })
       .catch(err => {
         console.error(err)
@@ -31,7 +34,7 @@ export class Viz extends React.Component {
 
   fetchDataset(location) {
     if (this.state.datasets.has(location)) {
-      this.setState({ dataset: this.state.datasets.get(location) })
+      this.setState({ dataset: this.state.datasets.get(location), location })
     } else {
       DataSet.loadByRegion(location)
         .then(dataset => this.setState({
