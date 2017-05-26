@@ -85,6 +85,7 @@ export class Graph extends React.Component {
                   lowerRatio={dataPoint.get(1, 0)}
                   upperRatio={dataPoint.get(2, 1)}
                   baseRatio={dataPoint.first()}
+                  highlight='#00BCD4'
                   innerFill='#80DEEA'
                   outerFill='#E91E63'/>)
             }

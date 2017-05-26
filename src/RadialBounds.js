@@ -23,16 +23,42 @@ export class RadialBounds extends React.Component {
       .attr('transform', `translate(${this.props.x}, ${this.props.y})`)
 
     bounds.select('path').remove()
-    bounds.append('path')
+    bounds.insert('path', 'rect')
       .attr('d', upper)
       .attr('fill', this.props.outerFill || 'black')
       .attr('stroke-width', 0)
+  }
+
+  onMouseOver() {
+    select(this.refs.bounds)
+      .insert('circle', 'circle')
+      .attr('stroke', this.props.highlight)
+      .attr('stroke-width', 1)
+      .attr('opacity', 0.54)
+      .attr('fill', this.props.highlight)
+      .attr('fill-opacity', 0.12)
+      .attr('r', this.props.maxRadius)
+  }
+
+  onMouseOut() {
+    select(this.refs.bounds)
+      .select('circle')
+      .remove()
   }
 
   render() {
     return (
       <g ref="bounds" key={this.props.key}>
         <circle r={radialProportion(this.props.lowerRatio, this.props.maxRadius)} fill={this.props.innerFill || 'black'} />
+        <rect
+          x={-this.props.maxRadius}
+          y={-this.props.maxRadius}
+          opacity="0"
+          width={this.props.maxRadius*2}
+          height={this.props.maxRadius*2}
+          onMouseOver={this.onMouseOver.bind(this)}
+          onMouseOut={this.onMouseOut.bind(this)}
+        />
       </g>
     )
   }
