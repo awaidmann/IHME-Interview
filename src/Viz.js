@@ -4,19 +4,29 @@ import { Map } from 'immutable'
 import { Graph } from './Graph'
 import { Controls } from './Controls'
 import { DataSet } from './DataSet'
+import { Legend } from './Legend'
 
 export class Viz extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
+      legend: undefined,
       datasets: Map(),
       dataset: undefined,
-      location: 'G',
+      location: undefined,
     }
   }
 
   componentDidMount() {
-    this.fetchDataset(this.state.location)
+    Legend.load()
+      .then(legend => {
+        this.setState({ legend })
+        this.fetchDataset(this.state.location)
+      })
+      .catch(err => {
+        console.error(err)
+        this.setState({ legend: undefined })
+      })
   }
 
   fetchDataset(location) {
@@ -40,10 +50,16 @@ export class Viz extends React.Component {
     const controlsHeight = 64
     return (
       <div>
-        <Graph dataset={this.state.dataset} {...this.props} height={this.props.height - controlsHeight} />
+        <Graph
+          legend={this.state.legend}
+          dataset={this.state.dataset}
+          {...this.props}
+          height={this.props.height - controlsHeight}
+          />
         <Controls
           {...this.props}
           height={controlsHeight}
+          legend={this.state.legend}
           value={this.state.location}
           onLocationChange={location => { this.fetchDataset(location) }}
           />
