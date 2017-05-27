@@ -14,16 +14,18 @@ export class Viz extends React.Component {
       datasets: Map(),
       dataset: undefined,
       location: undefined,
+      metric: undefined,
     }
   }
 
   componentDidMount() {
     Legend.load()
       .then(legend => {
-        this.setState({ legend })
+        const initialMetric = legend.filter('metric')
+          .getIn([0, legend.order('metric').get('metric')])
         const initialLocation = legend.filter('location')
           .getIn([0, legend.order('location').get('location')])
-
+        this.setState({ legend, metric: initialMetric })
         this.fetchDataset(initialLocation)
       })
       .catch(err => {
@@ -56,6 +58,7 @@ export class Viz extends React.Component {
         <Graph
           legend={this.state.legend}
           dataset={this.state.dataset}
+          metric={this.state.metric}
           {...this.props}
           height={this.props.height - controlsHeight}
           />
@@ -65,6 +68,7 @@ export class Viz extends React.Component {
           legend={this.state.legend}
           value={this.state.location}
           onLocationChange={location => { this.fetchDataset(location) }}
+          onMetricChange={metric => { this.setState({ metric }) }}
           />
       </div>
     )

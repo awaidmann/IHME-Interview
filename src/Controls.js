@@ -3,15 +3,15 @@ import { Map, List } from 'immutable'
 
 
 export class Controls extends React.Component {
-  buildOptions() {
+  buildOptions(group, valuePath, keyPath, displayPath) {
     if (this.props.legend) {
-      const order = this.props.legend.order('location')
-      return this.props.legend.filter('location')
-        .map((location) => {
+      const order = this.props.legend.order(group)
+      return this.props.legend.filter(group)
+        .map((option) => {
           return (
-            <option value={location.get(order.get('location'))}
-              key={location.get(order.get('location_id'))}>
-              { location.get(order.get('location_name')) }
+            <option value={option.get(order.get(valuePath))}
+              key={option.get(order.get(keyPath))}>
+              { option.get(order.get(displayPath)) }
             </option>
           )
         })
@@ -28,7 +28,16 @@ export class Controls extends React.Component {
           onChange={(e) => {
             if (this.props.onLocationChange) this.props.onLocationChange(e.target.value)
           }}>
-            { this.buildOptions() }
+            { this.buildOptions('location', 'location', 'location_id', 'location_name') }
+        </select>
+
+        <select
+          name="metric"
+          value={this.props.metric}
+          onChange={(e) => {
+            if (this.props.onMetricChange) this.props.onMetricChange(e.target.value)
+          }}>
+            { this.buildOptions('metric', 'metric', 'metric', 'metric') }
         </select>
       </div>
     )

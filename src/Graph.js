@@ -66,7 +66,7 @@ export class Graph extends React.Component {
       xAxisProps.originY = originY
 
       if (this.props.dataset) {
-        const path = Map({ sex_id: '1', metric: 'obese' })
+        const path = Map({ sex_id: '1', metric: this.props.metric })
         boundsComps = xFilters
           .reduce((comps, xKey, i) => {
             const x = xAxisProps.scale(new Date(Number(xKey), 0)) + originX
@@ -93,7 +93,7 @@ export class Graph extends React.Component {
               return _comps
             }, comps)
           }, List())
-          .toArray()  
+          .toArray()
       }
     }
 
