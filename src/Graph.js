@@ -66,31 +66,55 @@ export class Graph extends React.Component {
       xAxisProps.originY = originY
 
       if (this.props.dataset) {
-        const path = Map({ sex_id: '1', metric: this.props.metric })
         boundsComps = xFilters
           .reduce((comps, xKey, i) => {
             const x = xAxisProps.scale(new Date(Number(xKey), 0)) + originX
-            const pointPath = path.set('year', xKey)
+            const filterWithX = Map().set('year', xKey)
 
             return yFilters.reduce((_comps, yKey, j) => {
-              const yKeyId = yFiltersRevMap.get(yKey)
-              const dataPoint = this.props.dataset
-                .valueAt(pointPath.set('age_group_id', yKeyId))
-              if (dataPoint) {
-                return _comps.push(
-                  <RadialBounds
-                    key={`${i}.${j}`}
-                    x={x}
-                    y={originY - step - yAxisProps.scale(yKey)}
-                    maxRadius={step/2}
-                    lowerRatio={dataPoint.get(1, 0)}
-                    upperRatio={dataPoint.get(2, 1)}
-                    baseRatio={dataPoint.first()}
-                    highlight='#00BCD4'
-                    innerFill='#80DEEA'
-                    outerFill='#E91E63'/>)
+              const filterWithY = filterWithX.set('age_group_id', yFiltersRevMap.get(yKey))
+              const r0 = this.props.dataset.valueAt(filterWithY.merge(this.props.r0Filter), List())
+                .get(this.props.r0Filter.get('value'), 0)
+              const r1 = this.props.dataset.valueAt(filterWithY.merge(this.props.r1Filter), List())
+                .get(this.props.r1Filter.get('value'), 0)
+              const r2 = this.props.dataset.valueAt(filterWithY.merge(this.props.r2Filter), List())
+                .get(this.props.r2Filter.get('value'), 0)
+
+              const lower = Math.min(r0, r1, r2)
+              const upper = Math.max(r0, r1, r2)
+              const base = Math.max(Math.min(r0, r1), Math.min(r1, r2), Math.min(r0, r2))
+
+              let innerFill
+              let centerFill
+              let outerFill
+              if (lower == r0) {
+                innerFill = this.props.r0Fill
+                centerFill = upper == r1 ? this.props.r2Fill : this.props.r1Fill
+                outerFill = upper == r1 ? this.props.r1Fill : this.props.r2Fill
+              } else if (lower == r1) {
+                innerFill = this.props.r1Fill
+                centerFill = upper == r0 ? this.props.r2Fill : this.props.r0Fill
+                outerFill = upper == r0 ? this.props.r0Fill : this.props.r2Fill
+              } else {
+                innerFill = this.props.r2Fill
+                centerFill = upper == r0 ? this.props.r1Fill : this.props.r0Fill
+                outerFill = upper == r0 ? this.props.r0Fill : this.props.r1Fill
               }
-              return _comps
+
+              return _comps.push(
+                <RadialBounds
+                  key={`${i}.${j}`}
+                  x={x}
+                  y={originY - step - yAxisProps.scale(yKey)}
+                  maxRadius={step/2}
+                  lowerRatio={lower}
+                  upperRatio={upper}
+                  baseRatio={base}
+                  highlight='#00BCD4'
+                  innerFill={innerFill}
+                  outerFill={outerFill}
+                  centerFill={centerFill}
+                  />)
             }, comps)
           }, List())
           .toArray()

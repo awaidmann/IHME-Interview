@@ -28,13 +28,13 @@ export class DataSet {
       .push(1)
   }
 
-  valueAt(filters) {
+  valueAt(filters, unset) {
     const index = filters.reduce((target, filter, key) => {
-      const filterIndex = this.orderIndexMap.get(key)
-      return target + (this.indexMap.getIn([key, filter]) * this.multipliers.get(filterIndex))
+      const filterIndex = this.orderIndexMap.get(key, Number.MAX_SAFE_INTEGER)
+      return target + (this.indexMap.getIn([key, filter], 0) * this.multipliers.get(filterIndex, 0))
     }, 0)
 
-    return this.dataSet.get(index)
+    return this.dataSet.get(index, unset)
   }
 
   static loadByRegion(region) {

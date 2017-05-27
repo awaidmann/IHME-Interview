@@ -1,5 +1,5 @@
 import React from 'react'
-import { Map } from 'immutable'
+import { Map, List } from 'immutable'
 
 import { Graph } from './Graph'
 import { Controls } from './Controls'
@@ -13,20 +13,19 @@ export class Viz extends React.Component {
       legend: undefined,
       datasets: Map(),
       dataset: undefined,
-      location: undefined,
-      metric: undefined,
+      filters: List(),
+    }
+
+    this.onLocationChange = this.fetchDataset.bind(this)
+    this.onFiltersChange = (filters) => {
+      this.setState({ filters: filters || List() })
     }
   }
 
   componentDidMount() {
     Legend.load()
       .then(legend => {
-        const initialMetric = legend.filter('metric')
-          .getIn([0, legend.order('metric').get('metric')])
-        const initialLocation = legend.filter('location')
-          .getIn([0, legend.order('location').get('location')])
-        this.setState({ legend, metric: initialMetric })
-        this.fetchDataset(initialLocation)
+        this.setState({ legend })
       })
       .catch(err => {
         console.error(err)
@@ -36,39 +35,44 @@ export class Viz extends React.Component {
 
   fetchDataset(location) {
     if (this.state.datasets.has(location)) {
-      this.setState({ dataset: this.state.datasets.get(location), location })
+      this.setState({ dataset: this.state.datasets.get(location)/*, location*/ })
     } else {
       DataSet.loadByRegion(location)
         .then(dataset => this.setState({
           datasets: this.state.datasets.set(location, dataset),
           dataset,
-          location
+          // location
         }))
         .catch(err => {
           console.error(err)
-          this.setState({ dataset: undefined, location: undefined })
+          this.setState({ dataset: undefined/*, location: undefined*/ })
         })
     }
   }
 
   render() {
-    const controlsHeight = 64
     return (
       <div>
-        <Graph
-          legend={this.state.legend}
-          dataset={this.state.dataset}
-          metric={this.state.metric}
-          {...this.props}
-          height={this.props.height - controlsHeight}
-          />
         <Controls
           {...this.props}
-          height={controlsHeight}
+          width={this.props.width / 3}
           legend={this.state.legend}
-          value={this.state.location}
-          onLocationChange={location => { this.fetchDataset(location) }}
-          onMetricChange={metric => { this.setState({ metric }) }}
+          onLocationChange={this.onLocationChange}
+          onFiltersChange={this.onFiltersChange}
+          />
+        <Graph
+          {...this.props}
+          width={this.props.width * (2/3)}
+          legend={this.state.legend}
+          dataset={this.state.dataset}
+
+          r0Filter={this.state.filters.get(0, Map())}
+          r1Filter={this.state.filters.get(1, Map())}
+          r2Filter={this.state.filters.get(2, Map())}
+
+          r0Fill='#00BCD4'
+          r1Fill='#3F51B5'
+          r2Fill='#F44336'
           />
       </div>
     )
