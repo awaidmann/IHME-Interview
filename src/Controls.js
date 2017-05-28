@@ -105,25 +105,47 @@ export class Controls extends React.Component {
   }
 
   render() {
+    const rowStyle = { width: "100%" }
+
+    const labelStyle = Object.assign({}, rowStyle,
+      {
+        fontFamily: "Arial, Helvetica, sans-serif",
+        fontSize: 16,
+
+      })
+    const selectStyle = Object.assign({}, rowStyle,
+      {
+        marginTop: 4,
+        marginBottom: 16,
+      })
+
     let comparison = <div />
     if (this.state.comparison == 0) {
       comparison = (
-        <select
-          name="gender"
-          value={this.state.gender}
-          onChange={this.onGenderChange}>
-            { this.buildOptions('sex', 'sex_id', 'sex_id', 'sex') }
-        </select>)
+        <div style={rowStyle}>
+          <label style={labelStyle}>Gender</label>
+          <select
+            name="gender"
+            style={selectStyle}
+            value={this.state.gender}
+            onChange={this.onGenderChange}>
+              { this.buildOptions('sex', 'sex_id', 'sex_id', 'sex') }
+          </select>
+        </div>)
     } else if (this.state.comparison == 1) {
       comparison = (
-        <select
-          name="bounds"
-          value={this.state.bounds}
-          onChange={this.onBoundsChange}>
-            <option value={0}>Mean</option>
-            <option value={1}>Lower</option>
-            <option value={2}>Upper</option>
-        </select>)
+        <div style={rowStyle}>
+          <label style={labelStyle}>Measurement</label>
+          <select
+            name="bounds"
+            style={selectStyle}
+            value={this.state.bounds}
+            onChange={this.onBoundsChange}>
+              <option value={0}>Mean</option>
+              <option value={1}>Lower</option>
+              <option value={2}>Upper</option>
+          </select>
+        </div>)
     }
 
     const mainStyle = Object.assign({}, {
@@ -135,27 +157,41 @@ export class Controls extends React.Component {
 
     return (
       <div style={mainStyle}>
-        <select
-          name="location"
-          value={this.state.location}
-          onChange={this.onLocationChange}>
-            { this.buildOptions('location', 'location', 'location_id', 'location_name') }
-        </select>
+        <div style={rowStyle}>
+          <label style={labelStyle} for="location">Country/Region</label>
+          <select
+            name="location"
+            style={selectStyle}
+            value={this.state.location}
+            onChange={this.onLocationChange}>
+              { this.buildOptions('location', 'location', 'location_id', 'location_name') }
+          </select>
+        </div>
 
-        <select
-          name="metric"
-          value={this.state.metric}
-          onChange={this.onMetricChange}>
-            { this.buildOptions('metric', 'metric', 'metric', 'metric') }
-        </select>
 
-        <select
-          name="comparison"
-          value={this.state.comparison}
-          onChange={this.onComparisonChange}>
-          <option value={0}>{ 'Measurement Range' }</option>
-          <option value={1}>{ 'Gender (F v M v Both)' }</option>
-        </select>
+        <div style={rowStyle}>
+          <label style={labelStyle}>Metric</label>
+          <select
+            name="metric"
+            style={selectStyle}
+            value={this.state.metric}
+            onChange={this.onMetricChange}>
+              { this.buildOptions('metric', 'metric', 'metric', 'metric') }
+          </select>
+        </div>
+
+
+        <div style={rowStyle}>
+          <label style={labelStyle}>Comparison Type</label>
+          <select
+            name="comparison"
+            style={selectStyle}
+            value={this.state.comparison}
+            onChange={this.onComparisonChange}>
+            <option value={0}>{ 'Measurement Bounds' }</option>
+            <option value={1}>{ 'Gender' }</option>
+          </select>
+        </div>
 
         { comparison }
       </div>
