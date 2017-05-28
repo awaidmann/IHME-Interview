@@ -18,7 +18,7 @@ export class Viz extends React.Component {
 
     this.onLocationChange = this.fetchDataset.bind(this)
     this.onFiltersChange = (filters) => {
-      this.setState({ filters: filters || List() })
+      this.setState({ filters: filters || Map() })
     }
   }
 
@@ -35,17 +35,16 @@ export class Viz extends React.Component {
 
   fetchDataset(location) {
     if (this.state.datasets.has(location)) {
-      this.setState({ dataset: this.state.datasets.get(location)/*, location*/ })
+      this.setState({ dataset: this.state.datasets.get(location) })
     } else {
       DataSet.loadByRegion(location)
         .then(dataset => this.setState({
           datasets: this.state.datasets.set(location, dataset),
           dataset,
-          // location
         }))
         .catch(err => {
           console.error(err)
-          this.setState({ dataset: undefined/*, location: undefined*/ })
+          this.setState({ dataset: undefined })
         })
     }
   }
@@ -66,13 +65,17 @@ export class Viz extends React.Component {
           legend={this.state.legend}
           dataset={this.state.dataset}
 
-          r0Filter={this.state.filters.get(0, Map())}
-          r1Filter={this.state.filters.get(1, Map())}
-          r2Filter={this.state.filters.get(2, Map())}
+          r0Filter={this.state.filters.getIn(['filters', 0], Map())}
+          r1Filter={this.state.filters.getIn(['filters', 1], Map())}
+          r2Filter={this.state.filters.getIn(['filters', 2], Map())}
 
           r0Fill='#00BCD4'
           r1Fill='#3F51B5'
           r2Fill='#F44336'
+
+          r0Label={this.state.filters.getIn(['labels', 0], Map())}
+          r1Label={this.state.filters.getIn(['labels', 1], Map())}
+          r2Label={this.state.filters.getIn(['labels', 2], Map())}
           />
       </div>
     )

@@ -63,11 +63,13 @@ export class Controls extends React.Component {
   }
 
   computeFilters() {
+    let labels = List()
     let filter = Map({ metric: this.state.metric })
     let filters = List()
     if (this.state.comparison == 0) {
       filter = filter.set('sex_id', this.state.gender)
       filters = List([filter.set('value', 0), filter.set('value', 1), filter.set('value', 2)])
+      labels = List(['mean', 'lower', 'upper'])
     } else if (this.state.comparison == 1) {
       const idIndex = this.props.legend.order('sex').get('sex_id')
       filters = this.props.legend
@@ -77,8 +79,13 @@ export class Controls extends React.Component {
             .set('sex_id', value.get(idIndex))
             .set('value', this.state.bounds)
           })
+
+      const labelIndex = this.props.legend.order('sex').get('sex')
+      labels = this.props.legend.filter('sex')
+        .map(value => value.get(labelIndex))
     }
-    this.onFiltersChange(filters)
+
+    this.onFiltersChange(Map({ filters, labels }))
   }
 
   buildOptions(group, valuePath, keyPath, displayPath) {

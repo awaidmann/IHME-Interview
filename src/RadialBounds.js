@@ -1,5 +1,5 @@
 import React from 'react'
-import { List } from 'immutable'
+import { List, Map } from 'immutable'
 import { select } from 'd3-selection'
 import { transition } from 'd3-transition'
 import { easeCubicInOut } from 'd3-ease'
@@ -62,17 +62,25 @@ export class RadialBounds extends React.Component {
       .attr('fill', this.props.highlight)
       .attr('fill-opacity', 0.12)
       .attr('r', this.props.maxRadius)
+
+    if (this.props.onPointHover) {
+      this.props.onPointHover(Map({ path: this.props.path, x: this.props.x, y: this.props.y }))
+    }
   }
 
   onMouseOut() {
     select(this.refs.bounds)
       .select('.highlight')
       .remove()
+
+    if (this.props.onPointHover) {
+      this.props.onPointHover()
+    }
   }
 
   render() {
     return (
-      <g ref="bounds" key={this.props.key}>
+      <g ref="bounds">
         <rect
           className="hitbox"
           x={-this.props.maxRadius}

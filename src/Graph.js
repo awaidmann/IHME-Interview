@@ -6,8 +6,56 @@ import { timeYear } from 'd3-time'
 import { DataSet } from './DataSet'
 import { Axis } from './Axis'
 import { RadialBounds } from './RadialBounds'
+import { Tooltip } from './Tooltip'
 
 export class Graph extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { tooltip: { visible: false } }
+    this.onPointHover = this.onPointHover.bind(this)
+  }
+
+  onPointHover(details) {
+    if (details) {
+      const ids = details.get('path', '').split('.')
+      const filter = Map({
+        year: ids[0],
+        age_group_id: ids[1],
+      })
+
+      const r0 = this.props.dataset.valueAt(filter.merge(this.props.r0Filter), List())
+        .get(this.props.r0Filter.get('value'), 0)
+      const r1 = this.props.dataset.valueAt(filter.merge(this.props.r1Filter), List())
+        .get(this.props.r1Filter.get('value'), 0)
+      const r2 = this.props.dataset.valueAt(filter.merge(this.props.r2Filter), List())
+        .get(this.props.r2Filter.get('value'), 0)
+
+      const x = details.get('x', 0)
+      const y = details.get('y', 0)
+
+      let anchorX = x <= this.props.width / 2 ? 'left' : 'right'
+      let anchorY = y <= this.props.height / 2 ? 'top' : 'bottom'
+
+      this.setState({
+        tooltip: {
+          visible: true,
+          x, y,
+          anchorX, anchorY,
+          r0, r1, r2,
+          r0Fill: this.props.r0Fill,
+          r1Fill: this.props.r1Fill,
+          r2Fill: this.props.r2Fill,
+
+          r0Label: this.props.r0Label,
+          r1Label: this.props.r1Label,
+          r2Label: this.props.r2Label,
+        }
+      })
+    } else {
+      this.setState({ tooltip: { visible: false } })
+    }
+  }
+
   render() {
     const gutterOffset = this.props.padding*2 + this.props.margin
     const graphWidth = this.props.width - gutterOffset*2
@@ -72,12 +120,16 @@ export class Graph extends React.Component {
             const filterWithX = Map().set('year', xKey)
 
             return yFilters.reduce((_comps, yKey, j) => {
-              const filterWithY = filterWithX.set('age_group_id', yFiltersRevMap.get(yKey))
-              const r0 = this.props.dataset.valueAt(filterWithY.merge(this.props.r0Filter), List())
+              const yKeyId = yFiltersRevMap.get(yKey)
+              const filterWithY = filterWithX.set('age_group_id', yKeyId)
+              const r0 = this.props.dataset
+                .valueAt(filterWithY.merge(this.props.r0Filter), List())
                 .get(this.props.r0Filter.get('value'), 0)
-              const r1 = this.props.dataset.valueAt(filterWithY.merge(this.props.r1Filter), List())
+              const r1 = this.props.dataset
+                .valueAt(filterWithY.merge(this.props.r1Filter), List())
                 .get(this.props.r1Filter.get('value'), 0)
-              const r2 = this.props.dataset.valueAt(filterWithY.merge(this.props.r2Filter), List())
+              const r2 = this.props.dataset
+                .valueAt(filterWithY.merge(this.props.r2Filter), List())
                 .get(this.props.r2Filter.get('value'), 0)
 
               const lower = Math.min(r0, r1, r2)
@@ -101,9 +153,11 @@ export class Graph extends React.Component {
                 outerFill = upper == r0 ? this.props.r0Fill : this.props.r1Fill
               }
 
+              const vDOMKey = `${xKey}.${yKeyId}`
               return _comps.push(
                 <RadialBounds
-                  key={`${i}.${j}`}
+                  key={vDOMKey}
+                  path={vDOMKey}
                   x={x}
                   y={originY - step - yAxisProps.scale(yKey)}
                   maxRadius={step/2}
@@ -114,6 +168,7 @@ export class Graph extends React.Component {
                   innerFill={innerFill}
                   outerFill={outerFill}
                   centerFill={centerFill}
+                  onPointHover={this.onPointHover}
                   />)
             }, comps)
           }, List())
@@ -126,6 +181,7 @@ export class Graph extends React.Component {
         { boundsComps }
         <Axis {...yAxisProps} />
         <Axis {...xAxisProps} />
+        <Tooltip {...this.state.tooltip} />
       </svg>
     )
   }
