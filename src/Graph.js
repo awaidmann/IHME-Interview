@@ -57,9 +57,9 @@ export class Graph extends React.Component {
   }
 
   render() {
-    const gutterOffset = this.props.padding*2 + this.props.margin
-    const graphWidth = this.props.width - gutterOffset*2
-    const graphHeight = this.props.height - gutterOffset*2
+    const gutterOffset = (this.props.padding + this.props.margin)*2
+    let graphWidth = this.props.width - gutterOffset*2
+    let graphHeight = this.props.height - gutterOffset*2
 
     const xAxisProps = {
       scale: scaleTime(),
@@ -91,12 +91,13 @@ export class Graph extends React.Component {
       yFilters = yFilters.map((y) => y.get(yOrder.get('age_group')))
       const adjYCount = yFilters.size + 1
 
-      const stepHeight = (graphHeight - yOffset - this.props.padding*2) / adjYCount
-      const stepWidth = (graphWidth - xOffset - this.props.padding*2) / adjXCount
-      const step = Math.min(stepHeight, stepWidth)
+      const stepHeight = (graphHeight - yOffset) / adjYCount
+      const stepWidth = (graphWidth - xOffset) / adjXCount
+      let step = Math.min(stepHeight, stepWidth)
 
-      const originX = xOffset + gutterOffset
-      const originY = (step * adjYCount) + this.props.padding
+
+      const originX = xOffset + gutterOffset/2
+      const originY = (step * adjYCount) + gutterOffset/2
 
       yAxisProps.scale = yAxisProps.scale
         .domain(yFilters
@@ -105,13 +106,16 @@ export class Graph extends React.Component {
         .range([0, step * adjYCount])
       yAxisProps.ticks = adjYCount
       yAxisProps.originX = originX
-      yAxisProps.originY = this.props.padding
+      yAxisProps.originY = gutterOffset/2
 
       xAxisProps.scale = xAxisProps.scale
         .domain([new Date(Number(xFilters.first()) - 1, 0), new Date(Number(xFilters.last()), 0)])
         .range([0, step * adjXCount])
       xAxisProps.originX = originX
       xAxisProps.originY = originY
+
+      graphWidth = step*adjXCount + xOffset + gutterOffset*2
+      graphHeight = step*adjYCount + yOffset + gutterOffset*2
 
       if (this.props.dataset) {
         boundsComps = xFilters
@@ -177,12 +181,14 @@ export class Graph extends React.Component {
     }
 
     return (
-      <svg width={graphWidth} height={graphHeight} padding={this.props.padding}>
-        { boundsComps }
-        <Axis {...yAxisProps} />
-        <Axis {...xAxisProps} />
-        <Tooltip {...this.state.tooltip} />
-      </svg>
+      <div style={this.props.style}>
+        <svg width={graphWidth} height={graphHeight}>
+          { boundsComps }
+          <Axis {...yAxisProps} />
+          <Axis {...xAxisProps} />
+          <Tooltip {...this.state.tooltip} />
+        </svg>
+      </div>
     )
   }
 }
