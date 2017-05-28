@@ -95,7 +95,6 @@ export class Graph extends React.Component {
       const stepWidth = (graphWidth - xOffset) / adjXCount
       let step = Math.min(stepHeight, stepWidth)
 
-
       const originX = xOffset + gutterOffset/2
       const originY = (step * adjYCount) + gutterOffset/2
 
@@ -163,7 +162,7 @@ export class Graph extends React.Component {
                   key={vDOMKey}
                   path={vDOMKey}
                   x={x}
-                  y={originY - step - yAxisProps.scale(yKey)}
+                  y={yAxisProps.scale(yKey) + gutterOffset/2}
                   maxRadius={step/2}
                   lowerRatio={lower}
                   upperRatio={upper}
