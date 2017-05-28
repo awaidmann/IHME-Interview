@@ -50,18 +50,25 @@ export class Viz extends React.Component {
   }
 
   render() {
+    const mainStyle = {
+      display: 'flex',
+      justifyContent: 'flex-start',
+      alignContent: 'flex-start'
+    }
+
     return (
-      <div>
+      <div style={mainStyle}>
         <Controls
           {...this.props}
-          width={this.props.width / 3}
+          style={{ flexGrow: 1, padding: this.props.padding, margin: this.props.margin }}
           legend={this.state.legend}
           onLocationChange={this.onLocationChange}
           onFiltersChange={this.onFiltersChange}
           />
         <Graph
           {...this.props}
-          width={this.props.width * (2/3)}
+          style={{ flexGrow: 3, padding: this.props.padding, margin: this.props.margin }}
+          width={(this.props.width * (2/3))}
           legend={this.state.legend}
           dataset={this.state.dataset}
 

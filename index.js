@@ -6,8 +6,8 @@ import { Viz } from './src/Viz'
 const style = {
   height: window.screen.availHeight,
   width: window.screen.availWidth,
-  margin: 8,
-  padding: 16,
+  margin: 4,
+  padding: 8,
 }
 
 ReactDOM.render(

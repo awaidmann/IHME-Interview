@@ -126,8 +126,15 @@ export class Controls extends React.Component {
         </select>)
     }
 
+    const mainStyle = Object.assign({}, {
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'flex-start',
+      alignContent: 'flex-start'
+    }, this.props.style)
+
     return (
-      <div height={this.props.height} width={this.props.width}>
+      <div style={mainStyle}>
         <select
           name="location"
           value={this.state.location}
